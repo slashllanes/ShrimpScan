@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShrimpScan — WSSV Detection System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <style>
+    /* Global Resets */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: #060b14;
+      font-family: 'Inter', sans-serif;
+      color: #e8edf5;
+      min-height: 100vh
+    }
+
+    /* Navigation */
+    .nav {
+      background: #0d1424;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .ntitle {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e8edf5;
+      letter-spacing: .3px
+    }
+
+    .nsub {
+      font-size: 8px;
+      color: #3a4558;
+      letter-spacing: 1.5px;
+      margin-top: 1px
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      letter-spacing: .5px
+    }
+
+    .pill-on {
+      background: rgba(0, 212, 170, 0.1);
+      color: #00d4aa;
+      border: 1px solid rgba(0, 212, 170, 0.2)
+    }
+
+    .pill-off {
+      background: rgba(255, 77, 106, 0.1);
+      color: #ff4d6a;
+      border: 1px solid rgba(255, 77, 106, 0.2)
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .dot-on {
+      background: #00d4aa
+    }
+
+    .dot-off {
+      background: #ff4d6a
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+      padding: 20px
+    }
+
+    .card {
+      background: #0d1424;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      margin-bottom: 16px;
+      overflow: hidden
+    }
+
+    .ch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+    }
+
+    .ct {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: #e8edf5;
+      font-weight: 600;
+      letter-spacing: .5px
+    }
+
+    .badge-rpi {
+      background: rgba(0, 212, 170, 0.1);
+      color: #00d4aa;
+      border: 1px solid rgba(0, 212, 170, 0.2);
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-off {
+      background: rgba(255, 255, 255, 0.05);
+      color: #7a8699;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* Video Area & Timer */
+    .vid {
+      background: #03070d;
+      position: relative;
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+    }
+
+    #sim-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      z-index: 1
+    }
+
+    .vplaceholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 2
+    }
+
+    .vplaceholder i {
+      font-size: 42px;
+      color: #1a2235
+    }
+
+    .vplaceholder span {
+      font-size: 10px;
+      color: #2a3548;
+      letter-spacing: 1px
+    }
+
+    .vtimer {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #e8edf5;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Updated Control Bar */
+    .cbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+    }
+
+    .bstart {
+      background: #00d4aa;
+      color: #060b14;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 0 12px rgba(0, 212, 170, 0.3);
+      transition: all .2s
+    }
+
+    .bstart:hover {
+      box-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
+      transform: translateY(-1px)
+    }
+
+    .bstart.stop {
+      background: #ff4d6a;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(255, 77, 106, 0.3)
+    }
+
+    .bstart.stop:hover {
+      box-shadow: 0 0 20px rgba(255, 77, 106, 0.5)
+    }
+
+    .bsec {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #7a8699;
+      font-size: 11px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Inter', sans-serif;
+      transition: all .2s
+    }
+
+    .bsec:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #e8edf5
+    }
+
+    /* Metrics Row */
+    .mrow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px
+    }
+
+    .metric {
+      background: #0d1424;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    .micon {
+      color: #3a4558;
+      font-size: 18px
+    }
+
+    .mlabel {
+      font-size: 9px;
+      color: #7a8699;
+      letter-spacing: 1px;
+      text-transform: uppercase
+    }
+
+    .mval {
+      font-size: 15px;
+      color: #e8edf5;
+      font-weight: 600
+    }
+
+    .mval.off {
+      color: #3a4558
+    }
+
+    /* Chart Area */
+    .chart-body {
+      padding: 20px;
+      height: 180px;
+      position: relative;
+    }
+
+    #chart-idle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 11px;
+      color: #3a4558;
+    }
+
+    /* Session Overview Cards */
+    .stat-card {
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .sc-default {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05)
+    }
+
+    .sc-success {
+      background: rgba(34, 197, 94, 0.04);
+      border: 1px solid rgba(34, 197, 94, 0.12)
+    }
+
+    .sc-danger {
+      background: rgba(255, 77, 106, 0.04);
+      border: 1px solid rgba(255, 77, 106, 0.12)
+    }
+
+    .sc-left {
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .sc-label {
+      font-size: 10px;
+      color: #7a8699;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 500
+    }
+
+    .sc-num {
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 1
+    }
+
+    .sc-sub {
+      font-size: 9px;
+      color: #4b586e;
+      font-weight: 500
+    }
+
+    .sc-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px
+    }
+
+    .sc-icon-default {
+      background: rgba(255, 255, 255, 0.06);
+      color: #7a8699
+    }
+
+    .sc-icon-success {
+      background: rgba(34, 197, 94, 0.12);
+      color: #22c55e
+    }
+
+    .sc-icon-danger {
+      background: rgba(255, 77, 106, 0.12);
+      color: #ff4d6a
+    }
+
+    .prog-container {
+      margin-top: 8px
+    }
+
+    .prog-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #7a8699;
+      margin-bottom: 8px;
+      font-weight: 500
+    }
+
+    .prog-track {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden
+    }
+
+    .prog-fill {
+      height: 100%;
+      background: #ff4d6a;
+      width: 0%;
+      transition: width 0.3s ease-in-out
+    }
+
+    /* Detection Logs */
+    .logs {
+      height: 300px;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .litem {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02)
+    }
+
+    .ldot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 3px;
+      flex-shrink: 0
+    }
+
+    .lmsg {
+      font-size: 11px;
+      margin-bottom: 4px;
+      color: #e8edf5
+    }
+
+    .lmeta {
+      display: flex;
+      gap: 12px;
+      font-size: 9px;
+      color: #7a8699
+    }
+
+    .lempty {
+      font-size: 11px;
+      color: #3a4558;
+      text-align: center;
+      padding: 40px 0;
+      letter-spacing: .5px
+    }
+
+    /* Modal Backdrop & Box styling */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 13, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-card {
+      background: #0d1424;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 680px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.2s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e8edf5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #7a8699;
+      cursor: pointer;
+      font-size: 18px;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+    }
+
+    .modal-close:hover {
+      color: #ff4d6a;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .preview-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #7a8699;
+      margin-bottom: 16px;
+    }
+
+    .preview-meta strong {
+      color: #e8edf5;
+    }
+
+    .table-wrapper {
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.01);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .preview-table th {
+      background: #0d1424;
+      color: #7a8699;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .preview-table td {
+      padding: 10px 14px;
+      color: #e8edf5;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .preview-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="nav">
+    <div class="brand">
+      <i class="ti ti-scan" style="font-size:24px;color:#00d4aa;"></i>
+      <div>
+        <div class="ntitle">ShrimpScan</div>
+        <div class="nsub">YOLO11 · WSSV DETECTION SYSTEM</div>
+      </div>
+    </div>
+    <div class="pill pill-off" id="conn-pill">
+      <div class="dot dot-off" id="conn-dot"></div><span id="conn-text">System Offline</span>
+    </div>
+  </nav>
+
+  <div class="grid">
+    <div>
+      <div class="card" style="margin-bottom: 0;">
+        <div class="vid" id="vid-area">
+          <video id="sim-video" loop muted playsinline src="output_labeled_shrimp.mp4"></video>
+          <div class="vtimer" id="vtimer"><i class="ti ti-clock"></i><span id="timer-val">00:00</span></div>
+          <div class="vplaceholder" id="vplaceholder">
+            <i class="ti ti-video-off"></i>
+            <span>CAMERA FEED INACTIVE</span>
+          </div>
+        </div>
+        <div class="cbar">
+          <button class="bstart" id="btn-start" onclick="toggleDetection()">
+            <i class="ti ti-player-play-filled" id="btn-icon"></i>
+            <span id="btn-label">Start Detection</span>
+          </button>
+          <button class="bsec" onclick="exportCSV()"><i class="ti ti-download"></i> Export CSV</button>
+        </div>
+      </div>
+
+      <div class="mrow" style="margin-top: 16px;">
+        <div class="metric">
+          <i class="ti ti-device-desktop micon"></i>
+          <div>
+            <div class="mlabel">YOLO11 MODEL</div>
+            <div class="mval" id="m-model">Loaded</div>
+          </div>
+        </div>
+        <div class="metric">
+          <i class="ti ti-camera micon"></i>
+          <div>
+            <div class="mlabel">PI CAM V2</div>
+            <div class="mval off" id="m-cam">Offline</div>
+          </div>
+        </div>
+        <div class="metric">
+          <i class="ti ti-activity micon"></i>
+          <div>
+            <div class="mlabel">INFERENCE</div>
+            <div class="mval off" id="m-inf">--</div>
+          </div>
+        </div>
+        <div class="metric">
+          <i class="ti ti-shield-check micon"></i>
+          <div>
+            <div class="mlabel">AVG CONFIDENCE</div>
+            <div class="mval off" id="m-conf">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">
+          <div class="ct"><i class="ti ti-chart-line" style="color:#00d4aa; font-size:16px;"></i> Detection Trend</div>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:10px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#00d4aa"></div><span
+                style="color:#7a8699">Healthy</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:10px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#ff4d6a"></div><span
+                style="color:#7a8699">Infected</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div id="chart-idle">Collecting data points...</div>
+          <svg id="trend-svg" width="100%" height="140" viewBox="0 0 520 140" preserveAspectRatio="none"
+            style="display:none;">
+            <defs>
+              <linearGradient id="gH" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#00d4aa" stop-opacity="0.2" />
+                <stop offset="100%" stop-color="#00d4aa" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="gI" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ff4d6a" stop-opacity="0.2" />
+                <stop offset="100%" stop-color="#ff4d6a" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <line x1="32" x2="508" y1="20" y2="20" stroke="rgba(255,255,255,0.04)" stroke-width="1" />
+            <line x1="32" x2="508" y1="60" y2="60" stroke="rgba(255,255,255,0.04)" stroke-width="1" />
+            <line x1="32" x2="508" y1="100" y2="100" stroke="rgba(255,255,255,0.04)" stroke-width="1" />
+            <path id="aH" d="" fill="url(#gH)" />
+            <path id="aI" d="" fill="url(#gI)" />
+            <path id="lH" d="" fill="none" stroke="#00d4aa" stroke-width="2" stroke-linejoin="round" />
+            <path id="lI" d="" fill="none" stroke="#ff4d6a" stroke-width="2" stroke-linejoin="round" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="ch">
+          <div class="ct"><i class="ti ti-activity" style="color:#00d4aa; font-size:16px;"></i> Session Overview</div>
+        </div>
+        <div style="padding:20px;">
+          <div class="stat-card sc-default">
+            <div class="sc-left">
+              <div class="sc-label">Total Scanned</div>
+              <div class="sc-num" style="color:#e8edf5" id="s-total">0</div>
+              <div class="sc-sub">shrimp detected</div>
+            </div>
+            <div class="sc-icon sc-icon-default"><i class="ti ti-search"></i></div>
+          </div>
+          <div class="stat-card sc-success">
+            <div class="sc-left">
+              <div class="sc-label">Healthy · P. Monodon</div>
+              <div class="sc-num" style="color:#00d4aa" id="s-healthy">0</div>
+              <div class="sc-sub" id="s-hpct">0.0% of total</div>
+            </div>
+            <div class="sc-icon sc-icon-success"><i class="ti ti-shield-check"></i></div>
+          </div>
+          <div class="stat-card sc-danger">
+            <div class="sc-left">
+              <div class="sc-label">WSSV Suspected</div>
+              <div class="sc-num" style="color:#ff4d6a" id="s-infected">0</div>
+              <div class="sc-sub" id="s-ipct">0.0% infection rate</div>
+            </div>
+            <div class="sc-icon sc-icon-danger"><i class="ti ti-alert-triangle"></i></div>
+          </div>
+          <div class="prog-container">
+            <div class="prog-labels"><span>Infection Rate</span><span id="r-pct">0.0%</span></div>
+            <div class="prog-track">
+              <div class="prog-fill" id="r-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">
+          <div class="ct"><i class="ti ti-shield-lock" style="color:#7a8699; font-size:16px;"></i> Detection Logs</div>
+        </div>
+        <div class="logs" id="log-list">
+          <div class="lempty" id="log-empty">System offline.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal backdrop for CSV preview -->
+  <div id="preview-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><i class="ti ti-table" style="color: #00d4aa; font-size: 18px;"></i> Export Preview</div>
+        <button class="modal-close" onclick="closePreview()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="preview-meta">
+          <span>Total Records: <strong id="preview-count">0</strong></span>
+          <span>Date: <strong id="preview-date">--</strong></span>
+        </div>
+        <div class="table-wrapper">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Shrimp ID</th>
+                <th>Status</th>
+                <th>Species</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="preview-rows">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="bsec" onclick="closePreview()">Cancel</button>
+        <div style="display: flex; gap: 10px;">
+          <button class="bsec" onclick="triggerPrint()"><i class="ti ti-printer"></i> Print Report</button>
+          <button class="bstart" onclick="triggerDownload()"><i class="ti ti-download"></i> Save CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let running = false;
+    let counterInt = null;
+    let chartInt = null;
+    let chartPts = [];
+    let logIdx = 0;
+    let total = 0, healthy = 0, infected = 0;
+    let sessionDetections = [];
+
+    const vid = document.getElementById('sim-video');
+
+    // Modified the logs to only show healthy detections
+    const LOG_MSGS = [
+      { type: 'info', msg: 'Target Acquired: Healthy P. monodon.', conf: 96 },
+      { type: 'info', msg: 'Target Acquired: Healthy P. monodon.', conf: 92 },
+      { type: 'info', msg: 'Target Acquired: Healthy P. monodon.', conf: 97 },
+      { type: 'info', msg: 'Target Acquired: Healthy P. monodon.', conf: 94 },
+      { type: 'info', msg: 'Target Acquired: Healthy P. monodon.', conf: 95 }
+    ];
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    vid.addEventListener('timeupdate', () => {
+      if (running) document.getElementById('timer-val').textContent = formatTime(vid.currentTime);
+    });
+
+    function ts() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+
+    function addLog(entry) {
+      const empty = document.getElementById('log-empty');
+      if (empty) empty.style.display = 'none';
+      const list = document.getElementById('log-list');
+      const div = document.createElement('div');
+      div.className = 'litem';
+      div.style.borderColor = entry.type === 'alert' ? 'rgba(255,77,106,0.2)' : 'rgba(0,212,170,0.2)';
+      div.innerHTML = `<div class="ldot" style="background:${entry.type === 'alert' ? '#ff4d6a' : '#00d4aa'}"></div>
+                   <div style="flex:1"><div class="lmsg">${entry.msg}</div>
+                   <div class="lmeta"><span>${ts()}</span><span>Conf: ${entry.conf}%</span></div></div>`;
+      list.insertBefore(div, list.firstChild);
+      if (list.children.length > 20) list.removeChild(list.lastChild);
+    }
+
+    function updateChart() {
+      if (chartPts.length < 2) return;
+      document.getElementById('chart-idle').style.display = 'none';
+      document.getElementById('trend-svg').style.display = 'block';
+
+      const W = 520, padL = 10, padR = 10, padT = 20, padB = 20, pH = 140 - padT - padB, pW = W - padL - padR;
+      const maxV = Math.max(1, ...chartPts.map(d => Math.max(d.h, d.i)));
+      const toX = i => padL + i * (pW / (chartPts.length - 1));
+      const toY = v => padT + pH - (v / maxV) * pH;
+
+      const lh = chartPts.map((d, i) => `${i === 0 ? 'M' : 'L'}${toX(i).toFixed(1)},${toY(d.h).toFixed(1)}`).join(' ');
+      const li = chartPts.map((d, i) => `${i === 0 ? 'M' : 'L'}${toX(i).toFixed(1)},${toY(d.i).toFixed(1)}`).join(' ');
+      const bot = padT + pH;
+
+      document.getElementById('lH').setAttribute('d', lh);
+      document.getElementById('lI').setAttribute('d', li);
+      document.getElementById('aH').setAttribute('d', `${lh} L${toX(chartPts.length - 1).toFixed(1)},${bot} L${padL},${bot} Z`);
+      document.getElementById('aI').setAttribute('d', `${li} L${toX(chartPts.length - 1).toFixed(1)},${bot} L${padL},${bot} Z`);
+    }
+
+    function toggleDetection() {
+      if (!running) {
+        running = true;
+        total = 0; healthy = 0; infected = 0; chartPts = []; logIdx = 0; sessionDetections = [];
+        document.getElementById('log-list').innerHTML = '<div class="lempty" id="log-empty" style="display:none;">System offline.</div>';
+
+        document.getElementById('btn-label').textContent = 'Stop Detection';
+        document.getElementById('btn-icon').className = 'ti ti-player-stop-filled';
+        document.getElementById('btn-start').className = 'bstart stop';
+        document.getElementById('vplaceholder').style.display = 'none';
+        document.getElementById('vtimer').style.display = 'flex';
+
+        document.getElementById('m-cam').textContent = 'Active'; document.getElementById('m-cam').className = 'mval';
+        document.getElementById('m-inf').textContent = '35ms'; document.getElementById('m-inf').className = 'mval';
+        document.getElementById('m-conf').textContent = '94%'; document.getElementById('m-conf').className = 'mval';
+        document.getElementById('conn-pill').className = 'pill pill-on';
+        document.getElementById('conn-dot').className = 'dot dot-on';
+        document.getElementById('conn-text').textContent = 'System Active';
+
+        vid.style.display = 'block';
+        vid.play();
+
+        counterInt = setInterval(() => {
+          // Disabled the infected counting logic
+          total += 1;
+          healthy += 1;
+
+          const lm = LOG_MSGS[logIdx % LOG_MSGS.length];
+
+          // Record detection for CSV export
+          sessionDetections.push({
+            timestamp: ts(),
+            shrimpId: `SHRIMP-${total.toString().padStart(3, '0')}`,
+            status: "Healthy",
+            species: "P. monodon",
+            confidence: lm.conf
+          });
+
+          const hp = total > 0 ? ((healthy / total) * 100).toFixed(1) : '0.0';
+          const ip = '0.0'; // Hardcoded to 0% for healthy run
+
+          document.getElementById('s-total').textContent = total;
+          document.getElementById('s-healthy').textContent = healthy;
+          document.getElementById('s-infected').textContent = 0;
+          document.getElementById('s-hpct').textContent = `${hp}% of total`;
+          document.getElementById('s-ipct').textContent = `${ip}% infection rate`;
+          document.getElementById('r-pct').textContent = `${ip}%`;
+          document.getElementById('r-fill').style.width = `0%`;
+
+          if (total % 2 === 0) { addLog(lm); logIdx++; }
+        }, 800);
+
+        chartInt = setInterval(() => {
+          chartPts.push({ h: healthy, i: 0 }); // Hardcoded infected to 0 for the chart
+          if (chartPts.length > 20) chartPts.shift();
+          updateChart();
+        }, 2000);
+
+      } else {
+        running = false;
+        clearInterval(counterInt); clearInterval(chartInt);
+
+        document.getElementById('btn-label').textContent = 'Start Detection';
+        document.getElementById('btn-icon').className = 'ti ti-player-play-filled';
+        document.getElementById('btn-start').className = 'bstart';
+        document.getElementById('vplaceholder').style.display = 'flex';
+        document.getElementById('vtimer').style.display = 'none';
+
+        document.getElementById('m-cam').textContent = 'Offline'; document.getElementById('m-cam').className = 'mval off';
+        document.getElementById('m-inf').textContent = '--'; document.getElementById('m-inf').className = 'mval off';
+        document.getElementById('m-conf').textContent = '--'; document.getElementById('m-conf').className = 'mval off';
+        document.getElementById('conn-pill').className = 'pill pill-off';
+        document.getElementById('conn-dot').className = 'dot dot-off';
+        document.getElementById('conn-text').textContent = 'System Offline';
+        document.getElementById('chart-idle').style.display = 'block';
+        document.getElementById('trend-svg').style.display = 'none';
+
+        vid.pause(); vid.currentTime = 0; vid.style.display = 'none';
+      }
+    }
+
+    let currentPreviewData = [];
+
+    function exportCSV() {
+      // If we have collected data during the active session, use it.
+      // Otherwise, use pre-populated mock data to show functionality.
+      if (sessionDetections.length > 0) {
+        currentPreviewData = sessionDetections;
+      } else {
+        currentPreviewData = [
+          { timestamp: ts(), shrimpId: "SHRIMP-001", status: "Healthy", species: "P. monodon", confidence: 96 },
+          { timestamp: ts(), shrimpId: "SHRIMP-002", status: "Healthy", species: "P. monodon", confidence: 92 },
+          { timestamp: ts(), shrimpId: "SHRIMP-003", status: "Healthy", species: "P. monodon", confidence: 97 },
+          { timestamp: ts(), shrimpId: "SHRIMP-004", status: "WSSV Suspected", species: "P. monodon", confidence: 88 },
+          { timestamp: ts(), shrimpId: "SHRIMP-005", status: "Healthy", species: "P. monodon", confidence: 94 },
+          { timestamp: ts(), shrimpId: "SHRIMP-006", status: "Healthy", species: "P. monodon", confidence: 95 },
+          { timestamp: ts(), shrimpId: "SHRIMP-007", status: "WSSV Suspected", species: "P. monodon", confidence: 85 },
+          { timestamp: ts(), shrimpId: "SHRIMP-008", status: "Healthy", species: "P. monodon", confidence: 91 },
+          { timestamp: ts(), shrimpId: "SHRIMP-009", status: "Healthy", species: "P. monodon", confidence: 93 },
+          { timestamp: ts(), shrimpId: "SHRIMP-010", status: "Healthy", species: "P. monodon", confidence: 96 }
+        ];
+      }
+
+      // Populate preview modal
+      document.getElementById('preview-count').textContent = currentPreviewData.length;
+      document.getElementById('preview-date').textContent = new Date().toLocaleDateString();
+      
+      const rowsHtml = currentPreviewData.map(d => `
+        <tr>
+          <td>${d.timestamp}</td>
+          <td>${d.shrimpId}</td>
+          <td>
+            <span style="color: ${d.status === 'Healthy' ? '#00d4aa' : '#ff4d6a'}; font-weight: 500;">
+              ${d.status}
+            </span>
+          </td>
+          <td>${d.species}</td>
+          <td>${d.confidence}%</td>
+        </tr>
+      `).join('');
+      
+      document.getElementById('preview-rows').innerHTML = rowsHtml;
+      document.getElementById('preview-modal').style.display = 'flex';
+    }
+
+    function closePreview() {
+      document.getElementById('preview-modal').style.display = 'none';
+    }
+
+    function triggerDownload() {
+      if (!currentPreviewData.length) return;
+      
+      const headers = ["Timestamp", "Shrimp ID", "Status", "Species", "Confidence (%)"];
+      const rows = currentPreviewData.map(d => [
+        `"${d.timestamp}"`,
+        `"${d.shrimpId}"`,
+        `"${d.status}"`,
+        `"${d.species}"`,
+        d.confidence
+      ]);
+      
+      const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `shrimpscan_detection_report_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      closePreview();
+    }
+
+    function triggerPrint() {
+      if (!currentPreviewData.length) return;
+      
+      const printWindow = window.open('', '_blank');
+      const html = `
+        <html>
+          <head>
+            <title>ShrimpScan Detection Report - ${new Date().toLocaleDateString()}</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 40px; color: #1e293b; }
+              h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; color: #0f172a; }
+              .meta { font-size: 13px; color: #64748b; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border-bottom: 1px solid #e2e8f0; padding: 12px 16px; text-align: left; font-size: 13px; }
+              th { background-color: #f8fafc; font-weight: 600; color: #475569; }
+              .status-healthy { color: #0d9488; font-weight: 600; }
+              .status-infected { color: #e11d48; font-weight: 600; }
+            </style>
+          </head>
+          <body>
+            <h1>ShrimpScan Detection Report</h1>
+            <div class="meta">Exported on: ${new Date().toLocaleString()} | Total Detections: ${currentPreviewData.length}</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Shrimp ID</th>
+                  <th>Status</th>
+                  <th>Species</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${currentPreviewData.map(d => `
+                  <tr>
+                    <td>${d.timestamp}</td>
+                    <td>${d.shrimpId}</td>
+                    <td><span class="${d.status === 'Healthy' ? 'status-healthy' : 'status-infected'}">${d.status}</span></td>
+                    <td>${d.species}</td>
+                    <td>${d.confidence}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <script>
+              window.onload = function() {
+                window.print();
+                window.close();
+              };
+            <\/script>
+          </body>
+        </html>
+      `;
+      printWindow.document.write(html);
+      printWindow.document.close();
+    }
+  </script>
+</body>
+
+</html>
